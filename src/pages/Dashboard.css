@@ -58,9 +58,16 @@
   font-size: 0.9rem;
 }
 
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
 .search-input {
   width: 100%;
   padding: 12px 16px;
+  padding-right: 45px;
   border: 2px solid #e0e0e0;
   border-radius: 8px;
   font-size: 1rem;
@@ -75,6 +82,75 @@
 
 .search-input::placeholder {
   color: #aaa;
+}
+
+.clear-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #ff5252;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s ease, transform 0.2s ease;
+  z-index: 1;
+}
+
+.clear-btn:hover {
+  background: #d32f2f;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.clear-btn:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.sort-container {
+  min-width: 160px;
+}
+
+.sort-container label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.sort-select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: white;
+  color: #333;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
+
+.sort-select:focus {
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.15);
+}
+
+.sort-select:hover {
+  border-color: #999;
 }
 
 .refresh-btn {
@@ -179,7 +255,7 @@
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   flex: 1;
-  min-width: 200px;
+  min-width: 150px;
   text-align: center;
 }
 
@@ -197,7 +273,38 @@
   color: #1a73e8;
 }
 
-/* Bonus 2: Selected Patient Card */
+.sort-info-card {
+  border: 2px solid #7c4dff;
+  background: linear-gradient(135deg, #ede7f6, #ffffff);
+}
+
+.sort-info-card h2 {
+  color: #4a148c;
+}
+
+.sort-badge {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #7c4dff;
+  text-transform: capitalize;
+}
+
+/* ── NEW: Page Info Card ── */
+.page-info-card {
+  border: 2px solid #ff9800;
+  background: linear-gradient(135deg, #fff3e0, #ffffff);
+}
+
+.page-info-card h2 {
+  color: #e65100;
+}
+
+.page-badge {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #ff9800;
+}
+
 .selected-card {
   border: 2px solid #4caf50;
   background: linear-gradient(135deg, #e8f5e9, #ffffff);
@@ -237,6 +344,17 @@
   color: #333;
   padding-bottom: 8px;
   border-bottom: 2px solid #e0e0e0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── NEW: Showing count text ── */
+.patients-showing {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: #888;
 }
 
 .patients-grid {
@@ -245,7 +363,6 @@
   gap: 20px;
 }
 
-/* ===== Loading Spinner ===== */
 .loading {
   text-align: center;
   padding: 40px;
@@ -283,6 +400,75 @@
   color: #e53935;
   background: #ffebee;
   border-radius: 8px;
+}
+
+/* ═══════════════════════════════════════ */
+/* NEW: PAGINATION STYLES                  */
+/* ═══════════════════════════════════════ */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+  padding: 16px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  flex-wrap: wrap;
+}
+
+.pagination-numbers {
+  display: flex;
+  gap: 4px;
+}
+
+.pagination-btn {
+  padding: 10px 16px;
+  border: 2px solid #e0e0e0;
+  background: white;
+  color: #333;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 44px;
+  text-align: center;
+}
+
+/* Hover effect for all pagination buttons */
+.pagination-btn:hover:not(:disabled) {
+  background: #e3f2fd;
+  border-color: #1a73e8;
+  color: #1a73e8;
+}
+
+/* Active page number (current page) */
+.pagination-active {
+  background: #1a73e8;
+  color: white;
+  border-color: #1a73e8;
+}
+
+.pagination-active:hover:not(:disabled) {
+  background: #1557b0;
+  color: white;
+}
+
+/* Disabled buttons (Prev on page 1, Next on last page) */
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #f5f5f5;
+}
+
+/* Prev and Next button specific styles */
+.pagination-prev,
+.pagination-next {
+  padding: 10px 20px;
+  font-weight: 700;
 }
 
 /* ===== SECTION 4: Scroll Button ===== */
@@ -335,5 +521,24 @@
   .error-card {
     flex-direction: column;
     text-align: center;
+  }
+
+  .sort-container {
+    min-width: 100%;
+  }
+
+  .pagination {
+    gap: 4px;
+  }
+
+  .pagination-btn {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    min-width: 38px;
+  }
+
+  .pagination-prev,
+  .pagination-next {
+    padding: 8px 14px;
   }
 }

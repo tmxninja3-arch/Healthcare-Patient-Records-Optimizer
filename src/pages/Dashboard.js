@@ -3,118 +3,64 @@ import axios from 'axios';
 import PatientCard from '../components/PatientCard';
 import './Dashboard.css';
 
+
+const PATIENTS_PER_PAGE = 3;
+
 function Dashboard() {
   // ============================================
   // STATE VARIABLES
   // ============================================
-  
-  // patients: stores the fetched patient data from API
+
   const [patients, setPatients] = useState([]);
-  
-  // search: stores what user types in search box
   const [search, setSearch] = useState('');
-  
-  // loading: tracks if API data is being fetched
   const [loading, setLoading] = useState(false);
-
-  // error: stores any API error message
   const [error, setError] = useState(null);
-  
-  // selectedPatient: stores which patient user clicked (Bonus 2)
   const [selectedPatient, setSelectedPatient] = useState(null);
-  
-  // lastRefreshed: stores timestamp of last data refresh (Bonus 3)
   const [lastRefreshed, setLastRefreshed] = useState(null);
+  const [sortBy, setSortBy] = useState('name');
 
-  // ============================================
-  // useRef HOOK - 3 USES
-  // ============================================
-  
-  // USE 1: Auto-focus the search input when page loads
+
+  const [currentPage, setCurrentPage] = useState(1);
+
+
+  // useRef HOOK
+
   const searchInputRef = useRef(null);
-  
-  // USE 2: Track how many times this component re-renders
   const renderCountRef = useRef(0);
-  
-  // USE 3: Reference to the top of the page for scroll functionality
   const topRef = useRef(null);
 
-  // ============================================
-  // RENDER COUNTER LOGIC (useRef)
-  // ============================================
   
-  // Every time this component renders, this value increases
-  // useRef does NOT cause re-render when updated (unlike useState)
+  // RENDER COUNTER
+
   renderCountRef.current = renderCountRef.current + 1;
 
-  // ============================================
-  // FETCH PATIENTS FUNCTION (USING AXIOS)
-  // ============================================
-  
-  // ---- DIFFERENCE: fetch vs axios ----
-  //
-  // WITH FETCH (old way):
-  //   const response = await fetch(url);
-  //   const data = await response.json();  // need extra step to parse JSON
-  //   // fetch does NOT throw error for 404/500 status codes
-  //
-  // WITH AXIOS (new way):
-  //   const response = await axios.get(url);
-  //   const data = response.data;  // already parsed as JSON automatically
-  //   // axios throws error for 404/500 status codes automatically
-  //
-  // AXIOS ADVANTAGES:
-  //   1. Auto JSON parsing (no need for .json())
-  //   2. Auto error handling for bad status codes
-  //   3. Better error messages
-  //   4. Request/Response interceptors
-  //   5. Request cancellation support
-  //   6. Works in both browser and Node.js
 
+  // FETCH PATIENTS (AXIOS)
+ 
   const fetchPatients = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      // AXIOS GET REQUEST
-      // axios.get() returns a promise
-      // response.data contains the parsed JSON data directly
-      // No need to call .json() like we do with fetch
-      const response = await axios.get('https://jsonplaceholder.typicode.com/users');
-      
-      // axios automatically parses JSON
-      // response.data = the actual data array
-      // response.status = 200
-      // response.headers = response headers
+      const response = await axios.get(
+        'https://jsonplaceholder.typicode.com/users'
+      );
+
       console.log('API Status:', response.status);
       console.log('Patients fetched:', response.data.length);
 
-      // Store the data in state
       setPatients(response.data);
-      
-      // Update last refreshed time (Bonus 3)
       setLastRefreshed(new Date().toLocaleTimeString());
-
+      
+      setCurrentPage(1);
     } catch (error) {
-      // AXIOS ERROR HANDLING
-      // axios provides detailed error information
-
       if (error.response) {
-        // Server responded with error status (4xx, 5xx)
-        // error.response.status = 404, 500, etc.
-        // error.response.data = error response body
         console.error('Server Error:', error.response.status);
-        console.error('Error Data:', error.response.data);
         setError(`Server Error: ${error.response.status}`);
-
       } else if (error.request) {
-        // Request was made but no response received (network issue)
-        // error.request = the request that was made
         console.error('Network Error: No response received');
         setError('Network Error: Please check your internet connection');
-
       } else {
-        // Something else went wrong
         console.error('Error:', error.message);
         setError(`Error: ${error.message}`);
       }
@@ -123,79 +69,124 @@ function Dashboard() {
     setLoading(false);
   };
 
-  // ============================================
   // useEffect - RUNS ON FIRST LOAD
-  // ============================================
-  
+
+
   useEffect(() => {
-    // Fetch patient data when component mounts
     fetchPatients();
-    
-    // AUTO FOCUS the search input
+
     if (searchInputRef.current) {
       searchInputRef.current.focus();
     }
-  }, []); 
-  // Empty [] = run only ONCE on mount
+  }, []);
 
-  // ============================================
-  // useCallback HOOK - MEMOIZED FUNCTIONS
-  // ============================================
   
-  // USE 1: Memoize the refresh button click handler
+  // useCallback HOOK - MEMOIZED FUNCTIONS
+
   const refreshPatients = useCallback(() => {
     console.log('Refreshing patients...');
     fetchPatients();
-  }, []); 
+  }, []);
 
-  // USE 2: Memoize the select handler passed to PatientCard
   const handleSelect = useCallback((patient) => {
     console.log('Patient selected:', patient.name);
     setSelectedPatient(patient);
-  }, []); 
+  }, []);
 
-  // Scroll to top handler
   const scrollToTop = useCallback(() => {
     if (topRef.current) {
       topRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, []);
 
-  // ============================================
-  // useMemo HOOK - MEMOIZED CALCULATIONS
-  // ============================================
-  
-  // USE 1: Memoize the filtered patients list
-  const filteredPatients = useMemo(() => {
-    console.log('Filtering patients...');
-    
-    if (!search.trim()) {
-      return patients;
-    }
-    
-    const searchLower = search.toLowerCase();
-    
-    return patients.filter((patient) => {
-      return (
-        patient.name.toLowerCase().includes(searchLower) ||
-        patient.email.toLowerCase().includes(searchLower)
-      );
-    });
-  }, [patients, search]); 
+  const clearSearch = useCallback(() => {
+    setSearch('');
+    setCurrentPage(1);
+    searchInputRef.current?.focus();
+  }, []);
 
-  // USE 2: Memoize the total patients count
+  const handleSortChange = useCallback((e) => {
+    setSortBy(e.target.value);
+    setCurrentPage(1);
+    console.log('Sorting by:', e.target.value);
+  }, []);
+
+  const handleSearchChange = useCallback((e) => {
+    setSearch(e.target.value);
+    setCurrentPage(1);
+   
+  }, []);
+
+  // Go to next page
+  const goToNextPage = useCallback(() => {
+    setCurrentPage((prev) => prev + 1);
+  }, []);
+
+  const goToPrevPage = useCallback(() => {
+    setCurrentPage((prev) => prev - 1);
+  }, []);
+
+  const goToPage = useCallback((pageNumber) => {
+    setCurrentPage(pageNumber);
+  }, []);
+
+  
+  // useMemo HOOK - MEMOIZED CALCULATIONS
+
+  // STEP 1: Filter and Sort patients (same as before)
+  const filteredPatients = useMemo(() => {
+    console.log('Filtering and sorting patients...');
+
+    let result = [...patients];
+
+    if (search.trim()) {
+      const searchLower = search.toLowerCase();
+      result = result.filter((patient) => {
+        return (
+          patient.name.toLowerCase().includes(searchLower) ||
+          patient.email.toLowerCase().includes(searchLower)
+        );
+      });
+    }
+
+    if (sortBy === 'name') {
+      result.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortBy === 'email') {
+      result.sort((a, b) => a.email.localeCompare(b.email));
+    } else if (sortBy === 'hospital') {
+      result.sort((a, b) =>
+        (a.company?.name || '').localeCompare(b.company?.name || '')
+      );
+    }
+
+    return result;
+  }, [patients, search, sortBy]);
+
+
+  const totalPages = useMemo(() => {
+    return Math.ceil(filteredPatients.length / PATIENTS_PER_PAGE);
+  }, [filteredPatients]);
+
+  
+  const paginatedPatients = useMemo(() => {
+    console.log('Calculating paginated patients...');
+    const startIndex = (currentPage - 1) * PATIENTS_PER_PAGE;
+   
+    const endIndex = startIndex + PATIENTS_PER_PAGE;
+    return filteredPatients.slice(startIndex, endIndex);
+  }, [filteredPatients, currentPage]);
+ 
   const totalPatients = useMemo(() => {
     console.log('Calculating total patients...');
     return filteredPatients.length;
-  }, [filteredPatients]); 
+  }, [filteredPatients]);
 
-  // ============================================
+
   // RENDER (JSX)
-  // ============================================
-  
+
+
   return (
     <div className="dashboard">
-      {/* Top reference point for scroll-to-top */}
       <div ref={topRef}></div>
 
       {/* ===== HEADER ===== */}
@@ -204,36 +195,59 @@ function Dashboard() {
         <p className="header-subtitle">Patient Records Optimization System</p>
       </header>
 
-      {/* ===== SECTION 1: Search, Refresh, Render Count ===== */}
+      {/* ===== SECTION 1: Controls ===== */}
       <section className="section-controls">
         <div className="controls-row">
-          {/* Search Input with useRef for auto-focus */}
+          {/* Search Input */}
           <div className="search-container">
             <label htmlFor="search">Search Patient:</label>
-            <input
-              id="search"
-              type="text"
-              placeholder="Search by name or email..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              ref={searchInputRef}  
-              className="search-input"
-            />
+            <div className="search-input-wrapper">
+              <input
+                id="search"
+                type="text"
+                placeholder="Search by name or email..."
+                value={search}
+                onChange={handleSearchChange}
+                ref={searchInputRef}
+                className="search-input"
+              />
+
+              {search && (
+                <button onClick={clearSearch} className="clear-btn">
+                  ❌
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Refresh Button with useCallback */}
+          {/* Sort Dropdown */}
+          <div className="sort-container">
+            <label htmlFor="sort">Sort By:</label>
+            <select
+              id="sort"
+              value={sortBy}
+              onChange={handleSortChange}
+              className="sort-select"
+            >
+              <option value="name">Name (A-Z)</option>
+              <option value="email">Email (A-Z)</option>
+              <option value="hospital">Hospital (A-Z)</option>
+            </select>
+          </div>
+
+          {/* Refresh Button */}
           <button onClick={refreshPatients} className="refresh-btn">
             🔄 Refresh Patients
           </button>
 
-          {/* Render Counter using useRef */}
+          {/* Render Counter */}
           <div className="render-counter">
             <span>Render Count: </span>
             <strong>{renderCountRef.current}</strong>
           </div>
         </div>
 
-        {/* Bonus 3: Last Refreshed Time */}
+        {/* Last Refreshed Time */}
         {lastRefreshed && (
           <div className="last-refreshed">
             Last Refreshed: {lastRefreshed}
@@ -254,14 +268,30 @@ function Dashboard() {
         </section>
       )}
 
-      {/* ===== SECTION 2: Total Patients (useMemo) ===== */}
+      {/* ===== SECTION 2: Stats ===== */}
       <section className="section-stats">
         <div className="stat-card">
           <h2>Total Patients</h2>
           <span className="stat-number">{totalPatients}</span>
         </div>
 
-        {/* Bonus 2: Selected Patient */}
+        <div className="stat-card sort-info-card">
+          <h2>Sorted By</h2>
+          <span className="sort-badge">
+            {sortBy === 'name' && '👤 Name'}
+            {sortBy === 'email' && '📧 Email'}
+            {sortBy === 'hospital' && '🏥 Hospital'}
+          </span>
+        </div>
+
+        {/* ── NEW: Page Info Card ── */}
+        <div className="stat-card page-info-card">
+          <h2>Current Page</h2>
+          <span className="page-badge">
+            {totalPages > 0 ? `${currentPage} of ${totalPages}` : '0 of 0'}
+          </span>
+        </div>
+
         {selectedPatient && (
           <div className="stat-card selected-card">
             <h2>Selected Patient</h2>
@@ -274,10 +304,22 @@ function Dashboard() {
         )}
       </section>
 
-      {/* ===== SECTION 3: Patient Cards ===== */}
       <section className="section-patients">
-        <h2>Patient Records</h2>
-        
+        <h2>
+          Patient Records
+          <span className="patients-showing">
+            {totalPatients > 0 && (
+              <>
+                {' '}(Showing {(currentPage - 1) * PATIENTS_PER_PAGE + 1}
+                -
+                {Math.min(currentPage * PATIENTS_PER_PAGE, totalPatients)}
+                {' '}of {totalPatients})
+              </>
+            )}
+          </span>
+          
+        </h2>
+
         {loading ? (
           <div className="loading">
             <div className="loading-spinner"></div>
@@ -286,20 +328,66 @@ function Dashboard() {
         ) : filteredPatients.length === 0 ? (
           <div className="no-results">No patients found for "{search}"</div>
         ) : (
-          <div className="patients-grid">
-            {filteredPatients.map((patient) => (
-              <PatientCard
-                key={patient.id}
-                patient={patient}
-                handleSelect={handleSelect}
-                searchTerm={search}
-              />
-            ))}
-          </div>
+          <>
+            {/* Patient Cards Grid */}
+            <div className="patients-grid">
+              
+              {paginatedPatients.map((patient) => (
+                <PatientCard
+                  key={patient.id}
+                  patient={patient}
+                  handleSelect={handleSelect}
+                  searchTerm={search}
+                  isSelected={selectedPatient?.id === patient.id}
+                />
+              ))}
+            </div>
+            
+
+            {totalPages > 1 && (
+              <div className="pagination">
+                {/* Previous Button */}
+                <button
+                  onClick={goToPrevPage}
+                  disabled={currentPage === 1}
+                  className="pagination-btn pagination-prev"
+                >
+                  ◀ Prev
+                </button>
+               
+                <div className="pagination-numbers">
+                  {Array.from({ length: totalPages }, (_, index) => {
+                    const pageNumber = index + 1;
+                    return (
+                      <button
+                        key={pageNumber}
+                        onClick={() => goToPage(pageNumber)}
+                        className={`pagination-btn pagination-number ${
+                          currentPage === pageNumber ? 'pagination-active' : ''
+                        }`}
+                      >
+                        {pageNumber}
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                <button
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                  className="pagination-btn pagination-next"
+                >
+                  Next ▶
+                </button>
+                
+              </div>
+            )}
+          
+          </>
         )}
       </section>
 
-      {/* ===== SECTION 4: Scroll To Top Button ===== */}
+      {/* ===== SECTION 4: Scroll Button ===== */}
       <section className="section-scroll">
         <button onClick={scrollToTop} className="scroll-btn">
           ⬆️ Scroll To Top

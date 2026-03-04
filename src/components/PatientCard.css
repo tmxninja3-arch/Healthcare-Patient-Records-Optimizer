@@ -24,6 +24,48 @@
   transform: translateY(-2px);
 }
 
+/* ─── NEW: Selected Card Styles (Feature 2) ─── */
+/* When a card is selected, it gets a green border and glow */
+.patient-card-selected {
+  border-color: #4caf50;
+  background: linear-gradient(135deg, #e8f5e9, #ffffff);
+  box-shadow: 0 4px 20px rgba(76, 175, 80, 0.25);
+  transform: translateY(-2px);
+}
+
+.patient-card-selected:hover {
+  border-color: #2e7d32;
+  box-shadow: 0 8px 30px rgba(76, 175, 80, 0.35);
+}
+
+/* ─── NEW: Selected Badge (Feature 2) ─── */
+/* Green badge that appears on top-right of selected card */
+.selected-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #4caf50;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(76, 175, 80, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+  }
+}
+
 /* ===== Avatar ===== */
 .patient-avatar {
   width: 50px;
@@ -37,6 +79,12 @@
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 14px;
+  transition: background 0.3s ease;
+}
+
+/* ─── NEW: Selected Avatar (Feature 2) ─── */
+.avatar-selected {
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
 }
 
 /* ===== Patient Info ===== */
@@ -57,7 +105,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  /* margin-bottom: 10px; */
 }
 
 .detail-icon {
@@ -94,11 +141,17 @@
   transition: transform 0.3s ease;
 }
 
+/* ─── UPDATED: Selected hint is always visible ─── */
+.patient-card-selected .select-hint {
+  transform: translateY(0);
+  background: #4caf50;
+}
+
 .patient-card:hover .select-hint {
   transform: translateY(0);
 }
 
-/* ===== Bonus 1: Highlight ===== */
+/* ===== Highlight ===== */
 .highlight {
   background-color: #fff176;
   color: #333;
